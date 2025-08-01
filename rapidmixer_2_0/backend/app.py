@@ -39,15 +39,16 @@ def split_audio():
         command = [
             "python", "-m", "demucs",
             "--out", output_dir,
-            "--name", os.path.splitext(filename)[0],
+            "--name", model,
             filepath
         ]
         
         try:
-            subprocess.run(command, check=True, capture_output=True, text=True)
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+            print(f"Demucs output: {result.stdout}")
         except subprocess.CalledProcessError as e:
             print(f"Error during stem separation: {e.stderr}")
-            return jsonify({'error': 'Failed to process audio file', 'details': e.stderr}), 500
+            return jsonify({'error': 'Failed to process audio file', 'details': str(e)}), 500
 
         # Construct stem URLs
         base_url = request.host_url
@@ -73,5 +74,38 @@ def send_separated(path):
     # The 'separated' directory is the base.
     return send_from_directory(app.config['SEPARATED_FOLDER'], path)
 
+@app.route('/health')
+def health_check():
+    """Health check endpoint for monitoring"""
+    return jsonify({
+        'status': 'healthy',
+        'uploads_dir_exists': os.path.exists(app.config['UPLOAD_FOLDER']),
+        'separated_dir_exists': os.path.exists(app.config['SEPARATED_FOLDER'])
+    })
+
+@app.route('/test-demucs')
+def test_demucs():
+    """Test if Demucs is properly installed and accessible"""
+    try:
+        result = subprocess.run(['python', '-m', 'demucs', '--help'], 
+                              capture_output=True, text=True, timeout=10)
+        if result.returncode == 0:
+            return jsonify({'status': 'Demucs is available'})
+        else:
+            return jsonify({'error': 'Demucs not working', 'details': result.stderr}), 500
+    except Exception as e:
+        return jsonify({'error': 'Demucs not found or not working', 'details': str(e)}), 500
+
+@app.errorhandler(413)
+def too_large(e):
+    return jsonify({'error': 'File too large. Maximum file size is 16MB.'}), 413
+
+@app.errorhandler(500)
+def server_error(e):
+    return jsonify({'error': 'Internal server error'}), 500
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # For production deployment
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug)
