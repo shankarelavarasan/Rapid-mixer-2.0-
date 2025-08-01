@@ -1,14 +1,63 @@
 const express = require("express");
 const { createClient } = require("@supabase/supabase-js");
 const cors = require("cors");
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 require("dotenv").config();
+const winston = require('winston');
+
+// Configure logging
+const logger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'rapid-mixer-backend' },
+  transports: [
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    })
+  ]
+});
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Security middleware
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiting to all requests
+app.use(limiter);
+
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path} - ${req.ip}`);
+  next();
+});
 
 // Supabase client create
 const supabase = createClient(
@@ -60,51 +109,102 @@ app.get("/users", async (req, res) => {
 });
 
 // Tracks endpoints
-app.get("/tracks", async (req, res) => {
-  try {
-    const { data, error } = await supabase.from("tracks").select("*");
+// Validation middleware
+const validateTrack = (req, res, next) => {
+  const { title, artist, file_url, duration } = req.body;
+  const errors = [];
 
-    if (error) {
-      console.error("Database error:", error);
-      return res.status(500).json({ error: error.message });
+  if (!title || typeof title !== 'string' || title.trim().length === 0) {
+    errors.push('Title is required and must be a non-empty string');
+  }
+
+  if (!artist || typeof artist !== 'string' || artist.trim().length === 0) {
+    errors.push('Artist is required and must be a non-empty string');
+  }
+
+  if (!file_url || typeof file_url !== 'string' || !file_url.startsWith('http')) {
+    errors.push('Valid file_url is required');
+  }
+
+  if (duration && (typeof duration !== 'number' || duration < 0)) {
+    errors.push('Duration must be a positive number');
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
+
+  next();
+};
+
+// GET /tracks - Get all tracks with pagination and filtering
+app.get('/tracks', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 100); // Max 100 items
+    const offset = (page - 1) * limit;
+    const search = req.query.search;
+
+    let query = supabase.from('tracks').select('*', { count: 'exact' });
+
+    if (search) {
+      query = query.or(`title.ilike.%${search}%,artist.ilike.%${search}%`);
     }
 
-    res.json({
-      success: true,
-      count: data.length,
-      data: data
+    query = query.order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+
+    const { data, error, count } = await query;
+    
+    if (error) {
+      logger.error('Error fetching tracks:', error);
+      return res.status(400).json({ error: error.message });
+    }
+    
+    res.json({ 
+      tracks: data || [], 
+      pagination: {
+        page,
+        limit,
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
     });
   } catch (error) {
-    console.error("Server error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    logger.error('Server error in GET /tracks:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-app.post("/tracks", async (req, res) => {
+app.post('/tracks', validateTrack, async (req, res) => {
   try {
-    const { title, artist, duration, file_url } = req.body;
-
-    if (!title || !file_url) {
-      return res.status(400).json({ error: "Title and file_url are required" });
-    }
-
-    const { data, error } = await supabase
-      .from("tracks")
-      .insert([{ title, artist, duration, file_url, created_at: new Date().toISOString() }])
-      .select();
-
+    const { title, artist, file_url, duration, genre, album } = req.body;
+    
+    const trackData = {
+      title: title.trim(),
+      artist: artist.trim(),
+      file_url: file_url.trim(),
+      duration: duration || 0,
+      genre: genre?.trim() || null,
+      album: album?.trim() || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    const { data, error } = await supabase.from('tracks').insert([trackData]).select();
+    
     if (error) {
-      console.error("Database error:", error);
-      return res.status(500).json({ error: error.message });
+      logger.error('Error adding track:', error);
+      return res.status(400).json({ error: error.message });
     }
-
-    res.status(201).json({
-      success: true,
-      data: data[0]
+    
+    logger.info(`Track added: ${title} by ${artist}`);
+    res.status(201).json({ 
+      message: 'Track added successfully', 
+      track: data[0] 
     });
   } catch (error) {
-    console.error("Server error:", error);
-    res.status(500).json({ error: "Internal server error" });
+    logger.error('Server error in POST /tracks:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
