@@ -22,7 +22,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Configure CORS with proper headers
+CORS(app, 
+     origins=[
+         'http://localhost:3000',
+         'http://localhost:8080', 
+         'http://127.0.0.1:3000',
+         'http://127.0.0.1:8080',
+         'https://rapid-india.github.io'
+     ],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization', 'X-Requested-With'],
+     expose_headers=['Content-Length'],
+     supports_credentials=True,
+     max_age=86400)
 
 load_dotenv()
 

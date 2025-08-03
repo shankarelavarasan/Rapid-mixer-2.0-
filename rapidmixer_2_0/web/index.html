@@ -17,7 +17,60 @@
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  
+  <!-- CORS and Security Headers -->
+  <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
+  <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
+  
+  <!-- Intl polyfills for deprecation warning fixes -->
+  <script>
+    // Check for Intl.Segmenter support to prevent v8BreakIterator deprecation warnings
+    if (!window.Intl.Segmenter) {
+      console.warn('Intl.Segmenter not available, loading polyfills...');
+      
+      // Basic polyfill for Intl.Segmenter
+      if (!window.Intl.Segmenter) {
+        window.Intl.Segmenter = function() {
+          return {
+            segment: function(text) {
+              return {
+                [Symbol.iterator]: function* () {
+                  let index = 0;
+                  for (const char of text) {
+                    yield {
+                      segment: char,
+                      index: index,
+                      isWordLike: /\w/.test(char)
+                    };
+                    index++;
+                  }
+                }
+              };
+            }
+          };
+        };
+      }
+    }
+    
+    // Disable deprecated v8BreakIterator
+    if (window.Intl && window.Intl.v8BreakIterator) {
+      window.Intl.v8BreakIterator = undefined;
+    }
+  </script>
+
+  <!-- Flutter configuration -->
+  <script>
+    // Flutter web configuration
+    window.flutterConfiguration = {
+      canvasKitBaseUrl: "canvaskit/",
+      canvasKitVariant: "full",
+      useColorEmoji: false,
+      renderer: "canvaskit"
+    };
+  </script>
+
   <meta name="description" content="RapidMixer - AI-powered audio separation tool">
 
   <!-- iOS meta tags & icons -->
@@ -38,10 +91,76 @@
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
+  
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #000000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    }
+
+    #loading-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-color: #000000;
+      z-index: 9999;
+    }
+
+    .loader {
+      border: 6px solid rgba(255, 255, 255, 0.1);
+      border-top: 6px solid #87ceeb;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: #87ceeb;
+      font-size: 16px;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .loading-subtext {
+      color: #666;
+      font-size: 12px;
+      margin-top: 10px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
+  <!-- Loading indicator -->
+  <div id="loading-container">
+    <div>
+      <div class="loader"></div>
+      <div class="loading-text">Loading RapidMixer...</div>
+      <div class="loading-subtext">Preparing your audio experience</div>
+    </div>
+  </div>
+
+  <!-- Flutter web app -->
   <script>
     window.addEventListener('load', function(ev) {
+      // Hide loading indicator when Flutter app loads
+      const loadingContainer = document.getElementById('loading-container');
+      
       // Download main.dart.js
       _flutter.loader.loadEntrypoint({
         serviceWorker: {
@@ -50,9 +169,27 @@
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
             appRunner.runApp();
+            // Hide loading indicator after app starts
+            if (loadingContainer) {
+              loadingContainer.style.display = 'none';
+            }
           });
         }
       });
+    });
+  </script>
+
+  <!-- Performance monitoring -->
+  <script>
+    // Monitor performance metrics
+    window.addEventListener('load', function() {
+      const perfData = performance.getEntriesByType('navigation')[0];
+      console.log('Page load time:', perfData.loadEventEnd - perfData.loadEventStart, 'ms');
+    });
+
+    // Monitor resource loading
+    window.addEventListener('error', function(e) {
+      console.error('Resource loading error:', e.filename, e.message);
     });
   </script>
 </body>
