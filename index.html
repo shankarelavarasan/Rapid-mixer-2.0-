@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <base href="/Rapid-mixer-2.0-/" />
+    <base href="/" />
 
     <meta charset="UTF-8" />
     <meta content="IE=Edge" http-equiv="X-UA-Compatible" />
@@ -70,9 +70,20 @@
       <div class="loader"></div>
     </div>
 
-    <script src="flutter_bootstrap.js" async></script>
+    <script src="flutter.js" defer></script>
 
     <script>
+      var scriptLoaded = false;
+
+      function loadMainDartJs() {
+        if (scriptLoaded) return;
+        scriptLoaded = true;
+        var scriptTag = document.createElement("script");
+        scriptTag.src = "main.dart.js";
+        scriptTag.type = "application/javascript";
+        document.body.appendChild(scriptTag);
+      }
+
       function removeLoader() {
         var loader = document.getElementById("loading-container");
         if (loader) {
@@ -85,14 +96,7 @@
         window.parent.postMessage({ type: "LOADING_COMPLETED", }, "*");
       });
 
-      // Initialize Flutter app
-      _flutter.loader.load({
-        onEntrypointLoaded: function(engineInitializer) {
-          engineInitializer.initializeEngine().then(function(appRunner) {
-            appRunner.runApp();
-          });
-        }
-      });
+      loadMainDartJs();
     </script>
 
     <script>

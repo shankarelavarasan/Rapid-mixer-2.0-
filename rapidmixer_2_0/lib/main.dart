@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
 import 'package:file_picker/file_picker.dart';
 
 void main() {
@@ -34,7 +34,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   bool _isProcessing = false;
-  String? _selectedFileName;
   List<Map<String, dynamic>> _separatedFiles = [];
   String _statusMessage = '';
   
@@ -73,7 +72,6 @@ class _HomePageState extends State<HomePage> {
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
         setState(() {
-          _selectedFileName = file.name;
           _isProcessing = true;
           _statusMessage = 'Processing audio file...';
         });
@@ -125,9 +123,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _downloadFile(String url, String filename) {
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', filename)
-      ..click();
+    (web.HTMLAnchorElement()
+      ..href = url
+      ..download = filename
+      ..click());
   }
 
   @override
