@@ -1,11 +1,11 @@
 {
-    "name": "rapid_mixer",
-    "short_name": "rapid_mixer",
+    "name": "RapidMixer",
+    "short_name": "RapidMixer",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "AI-powered audio separation tool",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

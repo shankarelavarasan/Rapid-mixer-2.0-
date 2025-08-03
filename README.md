@@ -1,189 +1,124 @@
-# 🎵 Rapid Mixer - Fully Functional Release Web App
+# 🚀 Rapid Mixer 2.0
 
-A complete music stem separation and mixing web application with dual backend architecture for production-ready deployment.
-
-## 🚀 Quick Start
-
-### Option 1: Windows Local Development (Recommended)
-```bash
-# Double-click or run from command prompt
-start-local.bat
-```
-
-### Option 2: Docker (Cross-platform)
-```bash
-# Copy environment variables
-cp rapidmixer_2_0/backend/.env.example rapidmixer_2_0/backend/.env
-cp rapid-mixer-backend/.env.example rapid-mixer-backend/.env
-
-# Edit .env files with your configuration
-
-# Start all services
-docker-compose up --build
-```
-
-### Option 3: Manual Setup
-```bash
-# Audio Processing Backend
-cd rapidmixer_2_0/backend
-python -m venv venv
-venv\Scripts\activate  # On Windows
-source venv/bin/activate  # On macOS/Linux
-pip install -r requirements.txt
-python app.py
-
-# User Management Backend (new terminal)
-cd rapid-mixer-backend
-npm install
-npm start
-```
-
-## 📋 Prerequisites
-
-- **Python 3.8+** (for audio processing)
-- **Node.js 16+** (for user management)
-- **Docker** (optional, for containerized deployment)
-- **FFmpeg** (automatically installed via Docker)
-
-## 🏗️ Architecture Overview
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Flutter Web   │────│   Nginx Proxy   │────│    Backends     │
-│      App        │    │   (Production)  │    │                 │
-└─────────────────┘    └─────────────────┘    ├─────────────────┤
-                                                   │ Audio Backend  │
-                                                   │ (Flask:5000)   │
-                                                   ├─────────────────┤
-                                                   │ User Backend   │
-                                                   │ (Node.js:3000) │
-                                                   └─────────────────┘
-```
-
-## 🔗 Backend Endpoints
-
-### Audio Processing Backend (`http://localhost:5000`)
-- `GET /health` - Health check
-- `GET /test-demucs` - Verify Demucs installation
-- `POST /upload` - Upload and process audio files
-- `GET /separated/<filename>` - Download processed stems
-
-### User Management Backend (`http://localhost:3000`)
-- `GET /health` - Health check
-- `GET /users` - Get all users
-- `POST /users` - Add new user
-- `GET /tracks` - Get all tracks
-- `POST /tracks` - Add new track
-- `GET /` - API documentation
-
-## 🧪 Testing Your Installation
-
-1. **Backend Health Check**: Open `test-backends.html` in your browser
-2. **Manual Testing**: Use the provided test HTML page
-3. **API Testing**: Use Postman or curl with the endpoints above
-
-## 🐳 Production Deployment
-
-### Docker Compose (Recommended)
-```bash
-# Production with nginx
-docker-compose --profile production up --build
-```
-
-### Heroku Deployment
-```bash
-# Audio Backend
-cd rapidmixer_2_0/backend
-heroku create rapid-mixer-audio
-git add .
-git commit -m "Deploy audio backend"
-git push heroku main
-
-# User Backend
-cd ../../rapid-mixer-backend
-heroku create rapid-mixer-users
-git add .
-git commit -m "Deploy user backend"
-git push heroku main
-```
-
-## ⚙️ Environment Variables
-
-### Audio Backend (.env)
-```bash
-DEBUG=false
-PORT=5000
-UPLOAD_FOLDER=uploads
-SEPARATED_FOLDER=separated
-MAX_CONTENT_LENGTH=52428800
-```
-
-### User Backend (.env)
-```bash
-PORT=3000
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
-```
-
-## 🎯 Features Implemented
-
-✅ **Audio Processing**: Complete stem separation using Demucs
-✅ **File Upload**: Secure audio file handling (MP3, WAV, FLAC)
-✅ **Dual Backend**: Specialized services for different concerns
-✅ **Health Monitoring**: Comprehensive health checks
-✅ **Error Handling**: Robust error handling and logging
-✅ **Production Ready**: Docker, Heroku, and manual deployment
-✅ **Cross-Platform**: Windows batch + Docker support
-✅ **API Documentation**: Self-documenting endpoints
-✅ **File Management**: Automatic cleanup and organization
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-1. **Demucs Not Found**
-   ```bash
-   # In audio backend directory
-   pip install demucs
-   ```
-
-2. **Port Already in Use**
-   ```bash
-   # Kill processes on ports 5000/3000
-   # Windows: netstat -ano | findstr :5000
-   # macOS: lsof -ti:5000 | xargs kill -9
-   ```
-
-3. **CORS Issues**
-   - Both backends have CORS enabled for development
-   - Use nginx proxy in production
-
-4. **Memory Issues with Large Files**
-   - Adjust `MAX_CONTENT_LENGTH` in .env
-   - Ensure sufficient system memory
-
-## 📊 Monitoring
-
-- **Health Checks**: All backends provide `/health` endpoints
-- **Logging**: Comprehensive request/response logging
-- **File Tracking**: Upload and processing status tracking
-
-## 🔄 Next Steps
-
-1. **Frontend Integration**: Connect your Flutter web app to the backends
-2. **Authentication**: Add JWT tokens to secure endpoints
-3. **Database**: Integrate Supabase for user management
-4. **Storage**: Add cloud storage for processed files
-5. **Queue System**: Implement Redis for async processing
-
-## 🆘 Support
-
-- Check the `DEPLOYMENT_GUIDE.md` for detailed instructions
-- Use `test-backends.html` to verify installation
-- Review logs in terminal windows for error details
+A modern Flutter-based mobile application utilizing the latest mobile development technologies and tools for building responsive cross-platform applications.
 
 ---
 
-**Ready for Production!** 🚀
+## 📋 Prerequisites
 
-Your Rapid Mixer application is now fully functional and ready for deployment. Use the provided scripts and guides to get started immediately.
+- Flutter SDK (^3.29.2)
+- Dart SDK
+- Android Studio / VS Code with Flutter extensions
+- Android SDK / Xcode (for iOS development)
+
+---
+
+## 🛠️ Installation
+
+1. Clone this repository:
+
+```bash
+git clone https://github.com/your-username/rapid-mixer.git
+cd rapid-mixer
+Install dependencies:
+
+bash
+Copy
+Edit
+flutter pub get
+Run the application:
+
+bash
+Copy
+Edit
+flutter run
+📁 Project Structure
+bash
+Copy
+Edit
+rapid-mixer/
+├── android/            # Android-specific configuration
+├── ios/                # iOS-specific configuration
+├── lib/
+│   ├── core/           # Core utilities and services
+│   │   └── utils/      # Utility classes
+│   ├── presentation/   # UI screens and widgets
+│   │   └── splash_screen/ # Splash screen implementation
+│   ├── routes/         # Application routing
+│   ├── theme/          # Theme configuration
+│   ├── widgets/        # Reusable UI components
+│   └── main.dart       # Application entry point
+├── assets/             # Static assets (images, fonts, etc.)
+├── pubspec.yaml        # Project dependencies and configuration
+└── README.md           # Project documentation
+🧩 Adding Routes
+To add new routes to the application, update the lib/routes/app_routes.dart file:
+
+dart
+Copy
+Edit
+import 'package:flutter/material.dart';
+import 'package:rapid_mixer/presentation/home_screen/home_screen.dart';
+import 'package:rapid_mixer/presentation/splash_screen/splash_screen.dart';
+
+class AppRoutes {
+  static const String initial = '/';
+  static const String home = '/home';
+
+  static Map<String, WidgetBuilder> routes = {
+    initial: (context) => const SplashScreen(),
+    home: (context) => const HomeScreen(),
+    // Add more routes here
+  };
+}
+🎨 Theming
+This project includes a comprehensive theming system with both light and dark themes:
+
+dart
+Copy
+Edit
+ThemeData theme = Theme.of(context);
+
+Color primaryColor = theme.colorScheme.primary;
+Includes:
+
+Color schemes
+
+Typography
+
+Input decorations
+
+Buttons, Cards, Dialogs
+
+📱 Responsive Design
+Using Sizer for responsive layouts:
+
+dart
+Copy
+Edit
+Container(
+  width: 50.w, // 50% of screen width
+  height: 20.h, // 20% of screen height
+  child: Text('Responsive Container'),
+)
+📦 Deployment
+Build for production:
+
+bash
+Copy
+Edit
+# For Android
+flutter build apk --release
+
+# For Web
+flutter build web
+
+# For iOS
+flutter build ios --release
+🙏 Acknowledgments
+Built with Rocket.new
+
+Powered by Flutter & Dart
+
+Styled using Material Design
+

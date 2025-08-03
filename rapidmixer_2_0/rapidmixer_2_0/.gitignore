@@ -1,0 +1,95 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+
+# Flutter/Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+/build/
+
+# Android
+/android/app/src/main/assets/flutter_assets/
+/android/app/build/
+/android/build/
+/android/app/build/
+/android/.gradle/
+/android/key.properties
+
+# iOS
+/ios/Flutter/App.framework
+/ios/Flutter/engine.version
+/ios/Flutter/flutter_assets/
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/info.plist
+/ios/Flutter/pod_manifest.lock
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/flutter_export_environment.sh
+/ios/Pods/
+/ios/Runner/GeneratedPluginRegistrant.h
+/ios/Runner/GeneratedPluginRegistrant.m
+/ios/Runner.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+/ios/Runner.xcworkspace/xcuserdata/
+/ios/Runner.xcodeproj/project.xcworkspace/
+/ios/Runner.xcodeproj/xcuserdata/
+/ios/ServiceDefinitions.json
+/ios/build/
+/ios/.symlinks/
+/ios/Pods/
+
+# Web
+/web/build/
+
+# Windows
+/windows/flutter/ephemeral
+/windows/flutter/generated_plugin_registrant.cc
+/windows/flutter/generated_plugins.cmake
+/windows/runner/Debug/
+/windows/runner/Release/
+/windows/runner/Profile/
+/windows/runner/GeneratedPluginRegistrant.cpp
+/windows/runner/flutter_window.h
+/windows/runner/flutter_window.cpp
+/windows/runner/main.cpp
+/windows/runner/utils.h
+/windows/runner/utils.cpp
+/windows/runner/win32_window.h
+/windows/runner/win32_window.cpp
+
+# Linux
+/linux/flutter/ephemeral
+/linux/flutter/generated_plugin_registrant.cc
+/linux/flutter/generated_plugins.cmake
+/linux/my_application.cc
+/linux/my_application.h
+
+# macOS
+/macos/Flutter/ephemeral
+/macos/Flutter/GeneratedPluginRegistrant.swift
+/macos/Flutter/Generated.xcconfig
+/macos/Flutter/Flutter-Debug.xcconfig
+/macos/Flutter/Flutter-Release.xcconfig
+/macos/Flutter/Flutter-Profile.xcconfig
+/macos/Pods/
+/macos/Runner/Configs/AppInfo.xcconfig
+/macos/Runner/Configs/Debug.xcconfig
+/macos/Runner/Configs/Release.xcconfig
+/macos/Runner/Configs/Profile.xcconfig
+/macos/Runner/GeneratedPluginRegistrant.swift
+
+# IDE files
+.idea/
+.vscode/
+
+# Other
+pubspec.lock

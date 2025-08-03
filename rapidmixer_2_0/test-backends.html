@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapid Mixer Backend Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .endpoint {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎵 Rapid Mixer Backend Test Suite</h1>
+    
+    <div class="container">
+        <h2>Backend Health Checks</h2>
+        <div id="health-status"></div>
+        <button onclick="testBackends()">Test All Backends</button>
+    </div>
+
+    <div class="container">
+        <h2>Audio Processing Backend (Flask)</h2>
+        <div class="endpoint">
+            <strong>Base URL:</strong> <span id="audio-base">http://localhost:5000</span><br>
+            <strong>Health:</strong> <span id="audio-health">Not tested</span><br>
+            <strong>Demucs Test:</strong> <span id="audio-demucs">Not tested</span>
+        </div>
+        <button onclick="testAudioBackend()">Test Audio Backend</button>
+        <button onclick="testDemucs()">Test Demucs</button>
+    </div>
+
+    <div class="container">
+        <h2>User Management Backend (Node.js)</h2>
+        <div class="endpoint">
+            <strong>Base URL:</strong> <span id="user-base">http://localhost:3000</span><br>
+            <strong>Health:</strong> <span id="user-health">Not tested</span><br>
+            <strong>Users:</strong> <span id="user-users">Not tested</span><br>
+            <strong>Tracks:</strong> <span id="user-tracks">Not tested</span>
+        </div>
+        <button onclick="testUserBackend()">Test User Backend</button>
+        <button onclick="getUsers()">Get Users</button>
+        <button onclick="getTracks()">Get Tracks</button>
+    </div>
+
+    <div class="container">
+        <h2>File Upload Test (Audio Backend)</h2>
+        <input type="file" id="audioFile" accept="audio/*">
+        <button onclick="uploadFile()">Upload & Process</button>
+        <div id="upload-status"></div>
+    </div>
+
+    <script>
+        const AUDIO_BASE = 'http://localhost:5000';
+        const USER_BASE = 'http://localhost:3000';
+
+        function updateStatus(elementId, status, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.className = `status ${type}`;
+            element.textContent = status;
+        }
+
+        async function testBackend(url, endpoint, statusId) {
+            try {
+                const response = await fetch(`${url}${endpoint}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    updateStatus(statusId, '✅ Online', 'success');
+                    return data;
+                } else {
+                    updateStatus(statusId, '❌ Error', 'error');
+                }
+            } catch (error) {
+                updateStatus(statusId, `❌ ${error.message}`, 'error');
+            }
+        }
+
+        async function testAudioBackend() {
+            await testBackend(AUDIO_BASE, '/health', 'audio-health');
+        }
+
+        async function testUserBackend() {
+            await testBackend(USER_BASE, '/health', 'user-health');
+        }
+
+        async function testDemucs() {
+            try {
+                const response = await fetch(`${AUDIO_BASE}/test-demucs`);
+                const data = await response.json();
+                updateStatus('audio-demucs', data.message || '✅ Ready', 'success');
+            } catch (error) {
+                updateStatus('audio-demucs', `❌ ${error.message}`, 'error');
+            }
+        }
+
+        async function getUsers() {
+            try {
+                const response = await fetch(`${USER_BASE}/users`);
+                const data = await response.json();
+                updateStatus('user-users', `✅ ${data.count || 0} users found`, 'success');
+            } catch (error) {
+                updateStatus('user-users', `❌ ${error.message}`, 'error');
+            }
+        }
+
+        async function getTracks() {
+            try {
+                const response = await fetch(`${USER_BASE}/tracks`);
+                const data = await response.json();
+                updateStatus('user-tracks', `✅ ${data.count || 0} tracks found`, 'success');
+            } catch (error) {
+                updateStatus('user-tracks', `❌ ${error.message}`, 'error');
+            }
+        }
+
+        async function uploadFile() {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                updateStatus('upload-status', 'Please select a file', 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                updateStatus('upload-status', '⏳ Uploading...', 'warning');
+                const response = await fetch(`${AUDIO_BASE}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    updateStatus('upload-status', `✅ ${data.message}`, 'success');
+                } else {
+                    updateStatus('upload-status', `❌ ${data.error}`, 'error');
+                }
+            } catch (error) {
+                updateStatus('upload-status', `❌ ${error.message}`, 'error');
+            }
+        }
+
+        async function testBackends() {
+            updateStatus('health-status', '⏳ Testing all backends...', 'warning');
+            
+            await Promise.all([
+                testAudioBackend(),
+                testUserBackend(),
+                testDemucs(),
+                getUsers(),
+                getTracks()
+            ]);
+            
+            updateStatus('health-status', '✅ All tests completed', 'success');
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            testBackends();
+        };
+    </script>
+</body>
+</html>
