@@ -22,7 +22,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+# Configure CORS with specific origins for production
+CORS(app, origins=[
+    'https://shankarelavarasan.github.io',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:8080'
+], supports_credentials=True)
 
 load_dotenv()
 

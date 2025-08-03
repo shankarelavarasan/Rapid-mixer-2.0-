@@ -1,8 +1,12 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'package:web/web.dart' as web;
-import 'package:file_picker/file_picker.dart';
 
 void main() {
   runApp(const RapidMixerApp());
@@ -40,6 +44,10 @@ class _HomePageState extends State<HomePage> {
   // API Configuration
   static const String _flaskApiUrl = 'https://rapid-mixer-backend.onrender.com';
   static const String _nodeApiUrl = 'https://rapid-mixer-node-api.onrender.com';
+  
+  // Fallback URLs for development
+  static const String _localFlaskUrl = 'http://localhost:5000';
+  static const String _localNodeUrl = 'http://localhost:3000';
 
   @override
   void initState() {
@@ -88,36 +96,86 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _processAudioFile(PlatformFile file) async {
     try {
-      final request = http.MultipartRequest(
-        'POST',
-        Uri.parse('$_flaskApiUrl/split-audio'),
-      );
+      // Try primary API first, then fallback
+      String apiUrl = _flaskApiUrl;
+      bool success = false;
+      
+      for (int attempt = 0; attempt < 2; attempt++) {
+        try {
+          final request = http.MultipartRequest(
+            'POST',
+            Uri.parse('$apiUrl/split-audio'),
+          );
 
-      request.files.add(
-        http.MultipartFile.fromBytes(
-          'audio',
-          file.bytes!,
-          filename: file.name,
-        ),
-      );
+          // Add CORS headers
+          request.headers.addAll({
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          });
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'audio',
+              file.bytes!,
+              filename: file.name,
+            ),
+          );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _separatedFiles = List<Map<String, dynamic>>.from(data['files'] ?? []);
-          _statusMessage = 'Audio separation completed successfully!';
-          _isProcessing = false;
-        });
-      } else {
-        throw Exception('Server error: ${response.statusCode}');
+          setState(() {
+            _statusMessage = attempt == 0 ? 'Connecting to primary server...' : 'Trying backup server...';
+          });
+
+          final streamedResponse = await request.send().timeout(
+            const Duration(seconds: 30),
+            onTimeout: () {
+              throw Exception('Request timeout');
+            },
+          );
+          final response = await http.Response.fromStream(streamedResponse);
+
+          if (response.statusCode == 200) {
+            final data = json.decode(response.body);
+            setState(() {
+              _separatedFiles = List<Map<String, dynamic>>.from(data['files'] ?? []);
+              _statusMessage = 'Audio separation completed successfully!';
+              _isProcessing = false;
+            });
+            success = true;
+            break;
+          } else {
+            throw Exception('Server error: ${response.statusCode}');
+          }
+        } catch (e) {
+          if (attempt == 0) {
+            // Try local development server as fallback
+            apiUrl = _localFlaskUrl;
+            setState(() {
+              _statusMessage = 'Primary server unavailable, trying local server...';
+            });
+            continue;
+          }
+          rethrow;
+        }
       }
+      
+      if (!success) {
+        throw Exception('All servers unavailable');
+      }
+      
     } catch (e) {
+      String errorMessage;
+      if (e.toString().contains('timeout')) {
+        errorMessage = 'Request timeout. Please check your internet connection and try again.';
+      } else if (e.toString().contains('SocketException')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else {
+        errorMessage = 'Processing failed: $e';
+      }
+      
       setState(() {
         _isProcessing = false;
-        _statusMessage = 'Processing failed: $e';
+        _statusMessage = errorMessage;
       });
     }
   }
